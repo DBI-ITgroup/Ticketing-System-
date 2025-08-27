@@ -9,5 +9,6 @@ mysqlclient
 openai
 gunicorn
 python-dotenv
+dj-database-url==1.0.0
 
 
