@@ -2,6 +2,8 @@ from pathlib import Path
 import os
 from django.contrib.messages import constants as messages
 from decouple import config, Csv
+import dj_database_url
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -70,17 +72,24 @@ TEMPLATES = [
 WSGI_APPLICATION = 'helpdesk.wsgi.application'
 
 # Database
+#DATABASES = {
+#   'default': {
+#       
+#      'ENGINE': 'django.db.backends.mysql',
+#     'NAME': config("DB_NAME"),
+#    'USER': config("DB_USER"),
+#   'PASSWORD': config("DB_PASSWORD"),
+#       'EMAIL_BACKEND': config("EMAIL_BACKEND"),
+#       'HOST': config("DB_HOST", default="localhost"),
+#       'PORT': config("DB_PORT", default="3306"),
+#   }
+#}
+
 DATABASES = {
-    'default': {
-        
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': config("DB_NAME"),
-        'USER': config("DB_USER"),
-        'PASSWORD': config("DB_PASSWORD"),
-        'EMAIL_BACKEND': config("EMAIL_BACKEND"),
-        'HOST': config("DB_HOST", default="localhost"),
-        'PORT': config("DB_PORT", default="3306"),
-    }
+    "default": dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=600
+    )
 }
 
 # Password validation
