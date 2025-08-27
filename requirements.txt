@@ -5,7 +5,6 @@ djangorestframework
 django-widget-tweaks
 python-decouple
 django-cors-headers
-django-daisyui
 mysqlclient
 openai
 
