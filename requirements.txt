@@ -8,5 +8,6 @@ django-cors-headers
 mysqlclient
 openai
 gunicorn
+python-dotenv
 
 
