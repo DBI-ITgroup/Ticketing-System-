@@ -7,4 +7,6 @@ python-decouple
 django-cors-headers
 mysqlclient
 openai
+gunicorn
+
 
