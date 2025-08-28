@@ -38,6 +38,11 @@
                 {% heroicon_outline "ticket" %} Existing Requests
             </a>
         </li>
+		<li>
+            <a href="{% url 'l2_technician_history' %}" class="flex items-center gap-3 text-gray-700 hover:text-blue-600 font-semibold">
+                {% heroicon_outline "archive-box" class="w-5 h-5" %} History
+            </a>
+        </li>
     </ul>
     <div class="mt-auto">
         <a href="{% url 'logout' %}" class="flex items-center gap-2 px-3 py-2 rounded bg-gray-700 text-white hover:bg-red-600 transition">
