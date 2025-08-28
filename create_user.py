@@ -64,9 +64,9 @@ users_data = [
     ,
      {
         "username": "Kamvelihle.Mlenze@dbi-itgroup.co.za",
-        "email": "ITSupport@dbi-itgroup.co.za",
+        "email": "Kamvelihle.Mlenze@dbi-itgroup.co.za",
         "password": "Katlego@25",
-        "full_name": "Technician L2-2",
+        "full_name": "CAB Member1",
         "role": "CAB",
     }
     ]
