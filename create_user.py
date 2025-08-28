@@ -61,6 +61,14 @@ users_data = [
         "full_name": "Technician L2-2",
         "role": "L2_Technician",
     }
+    ,
+     {
+        "username": "Kamvelihle.Mlenze@dbi-itgroup.co.za",
+        "email": "ITSupport@dbi-itgroup.co.za",
+        "password": "Katlego@25",
+        "full_name": "Technician L2-2",
+        "role": "CAB",
+    }
     ]
 
 for user in users_data:
