@@ -210,4 +210,12 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.user.email}: {self.message[:20]}"
-  
+        
+ #History record 
+class TicketAssignment(models.Model):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="assignments")
+    technician = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.ticket.ticket_number} -> {self.technician.username}"   

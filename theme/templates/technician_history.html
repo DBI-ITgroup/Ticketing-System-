@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load heroicons %}
+{% load static %}
+
+{% block sidebar %}
+<nav class="flex flex-col h-full bg-gray-50 w-64 p-4">
+    <div class="mb-8 rounded-xl shadow bg-white p-4 text-center">
+        <h2 class="text-xl font-bold text-gray-800">Technician Panel</h2>
+        <p class="text-gray-500 text-sm">L1 Portal</p>
+    </div>
+    <ul class="flex-1 space-y-2">
+        <li>
+            <a href="{% url 'technician_dashboard' %}" class="flex items-center gap-3 text-gray-700 hover:text-blue-600 font-semibold">
+                {% heroicon_outline "clipboard" class="w-5 h-5" %} Dashboard
+            </a>
+        </li>
+         <li>
+            <a href="{% url 'l1_technicians_tickets' %}"  class="flex items-center gap-3 text-gray-700 hover:text-blue-600 font-semibold">
+                {% heroicon_outline "ticket" class="w-5 h-5" %} My Tickets
+            </a>
+        </li>
+        <li>
+        <a href="{% url 'technician_history' %}" class="flex items-center gap-3 text-gray-700 hover:text-blue-600 font-semibold">
+            {% heroicon_outline "archive-box" class="w-5 h-5" %} History
+        </a>
+    </li>
+
+    </ul>
+    <div class="mt-auto">
+        <a href="{% url 'logout' %}" class="flex items-center gap-2 px-3 py-2 rounded bg-gray-700 text-white hover:bg-red-600 transition">
+            {% heroicon_outline "arrow-left-start-on-rectangle" %} Logout
+        </a>
+    </div>
+</nav>
+{% endblock %}
+
+
+{% block content %}
+<div class="p-6">
+    <h2 class="text-2xl font-bold mb-4">My Ticket History</h2>
+
+    <table class="min-w-full border border-gray-200 shadow rounded">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="px-4 py-2 text-left">Ticket #</th>
+                <th class="px-4 py-2 text-left">Title</th>
+                <th class="px-4 py-2 text-left">Status</th>
+                <th class="px-4 py-2 text-left">Assigned At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assignment in assignments %}
+            <tr class="border-t">
+                <td class="px-4 py-2">{{ assignment.ticket.ticket_number }}</td>
+                <td class="px-4 py-2">{{ assignment.ticket.ticket_title }}</td>
+                <td class="px-4 py-2">{{ assignment.ticket.status }}</td>
+                <td class="px-4 py-2">{{ assignment.assigned_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="px-4 py-2 text-center text-gray-500">
+                    No tickets recorded yet.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

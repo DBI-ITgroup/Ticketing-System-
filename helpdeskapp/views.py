@@ -329,6 +329,13 @@ def notes(request):
 @login_required
 def accept_ticket(request, id):
     ticket = get_object_or_404(Ticket, id=id)
+    
+     # Record the assignment
+    TicketAssignment.objects.create(
+        ticket=ticket,
+        technician=request.user
+    )
+    
     ticket.status = "In Progress"
     ticket.assigned_at = timezone.now()       # New: time ticket was accepted
 
@@ -513,7 +520,15 @@ def accept_ticket_l2_escalated(request, id):
         ticket.accepted_by_l2 = True
         ticket.start_time = timezone.now()
         ticket.save()
-
+        
+        
+        # Record assignment for history
+        TicketAssignment.objects.create(
+            ticket=ticket,
+            technician=request.user,
+            assigned_at=timezone.now()
+        )
+        
     return redirect('escalated_tickets')  
 
 @require_POST
@@ -524,6 +539,14 @@ def accept_ticket_l2_completed(request, id):
         ticket.accepted_by_l2 = True
         ticket.start_time = timezone.now()
         ticket.save()
+        
+        # Record assignment for history
+        TicketAssignment.objects.create(
+            ticket=ticket,
+            technician=request.user,
+            assigned_at=timezone.now()
+        )
+        
     return redirect('completed_tickets')
 
 #Chatbot
@@ -913,3 +936,19 @@ def custom_password_reset_confirm(request, uidb64, token):
         # messages.error(request, "The reset link is invalid or expired.")
         return redirect('login')
     
+#History
+@login_required
+def technician_history(request):
+    assignments = TicketAssignment.objects.filter(
+        technician=request.user
+    ).select_related("ticket").order_by("-assigned_at")
+
+    return render(request, "technician_history.html", {"assignments": assignments})
+
+@login_required
+def l2_technician_history(request):
+    assignments = TicketAssignment.objects.filter(
+        technician=request.user
+    ).select_related("ticket").order_by("-assigned_at")
+
+    return render(request, "l2_technician_history.html", {"assignments": assignments})

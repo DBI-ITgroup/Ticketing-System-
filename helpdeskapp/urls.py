@@ -73,6 +73,10 @@ urlpatterns = [
          # Forgot Password 
     path('password_reset/', views.custom_password_reset, name='password_reset'),
     path('reset/<uidb64>/<token>/', views.custom_password_reset_confirm, name='custom_password_reset_confirm'),
+    
+    #History
+    path('technician/history/', views.technician_history, name='technician_history'),
+    path("l2/technician/history/", views.l2_technician_history, name="l2_technician_history"),
 
 
 
