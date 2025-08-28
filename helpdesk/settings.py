@@ -31,7 +31,6 @@ INSTALLED_APPS = [
     'theme',
     'cloudinary',
     'cloudinary_storage',
-    'django.contrib.staticfiles',
 ]
 
 TAILWIND_APP_NAME = 'theme'
