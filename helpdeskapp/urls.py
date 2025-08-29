@@ -45,6 +45,8 @@ urlpatterns = [
     path("cab/", views.cab_dashboard, name="cab"),
     path("cab_stats/", views.cab_stats_view, name="cab_stats"),
     path("cab/requests/table/", views.cab_requests_table_view, name="cab_requests_table"),
+    path("users/", views.user_management, name="user_management"),
+
  
 
 

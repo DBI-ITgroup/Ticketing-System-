@@ -37,6 +37,10 @@ from django.db.models import Q
 
 from .forms import CustomPasswordResetForm
 
+from django.contrib.auth import get_user_model
+from django.conf import settings
+from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
 
 
 User = CustomUser
@@ -57,6 +61,70 @@ def register(request):
         form = CustomUserRegistrationForm()
 
     return render(request, "register.html", {"form": form})
+    
+
+CustomUser = get_user_model()
+
+def user_management(request):
+    if request.method == "POST":
+        full_name = request.POST.get("full_name")
+        email = request.POST.get("email")
+        role = request.POST.get("role")
+        password = request.POST.get("password")
+        confirm_password = request.POST.get("confirm_password")
+
+        # Validate password if provided
+        if password and password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return redirect("user_management")
+
+        # Auto-generate password if blank
+        generated_password = None
+        if not password:
+            generated_password = get_random_string(12)  # Secure random password
+            password = generated_password
+
+        try:
+            # Create user
+            user = CustomUser.objects.create_user(
+                full_name=full_name,
+                email=email,
+                role=role,
+                username=email,  # still required by AbstractUser
+                password=password,
+            )
+
+            # Email credentials to user if password was auto-generated
+            if generated_password:
+                subject = "Your New Helpdesk Account Credentials"
+                message = (
+                    f"Hello {full_name},\n\n"
+                    f"Your helpdesk account has been created successfully.\n\n"
+                    f"🔹 Email: {email}\n"
+                    f"🔹 Password: {generated_password}\n\n"
+                    f"Please log in and change your password immediately.\n\n"
+                    f"Best regards,\n"
+                    f"Support Team"
+                )
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                )
+
+            messages.success(request, f"User {full_name} added successfully!")
+
+        except Exception as e:
+            messages.error(request, f"Failed to add user: {str(e)}")
+
+        return redirect("user_role_list")
+
+    # GET: show users
+    users = CustomUser.objects.all()
+    return render(request, "user_role_list.html", {"users": users})
+    
 
 def user_login(request):
     if request.method == "POST":
@@ -89,6 +157,8 @@ def user_login(request):
         form = CustomLoginForm()
             
     return render(request, "login.html", {"form": form})
+
+
 
 
 @login_required

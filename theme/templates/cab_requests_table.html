@@ -68,9 +68,15 @@
 {% endblock %}
 
 {% block content %}
+
+<div class="mb-6 py-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">CAB Requests</h2>
+        <p class="text-gray-600 text-sm text-center">View and manage all Change Advisory Board (CAB) requests submitted by users.</p>
+    </div>
+
 <!-- <div class="p-4 overflow-x-auto border border-gray-200 rounded-lg shadow bg-white max-w-7xl mx-auto my-8"> -->
-    <table class="min-w-full divide-y divide-gray-200 text-sm table border-collapse border border-gray-300 rounded-lg shadow-md">
-        <thead class="bg-gray-700 text-white rounded-lg shadow-md ">
+    <table class="divide-y divide-gray-200 text-sm w-full max-w-7xl mx-auto my-8 border border-gray-100 rounded-lg shadow bg-white">
+        <thead class="bg-gray-700 text-white">
             <tr>
                 <th class="px-4 py-2 text-left w-1/12">Requested By</th>
                 <th class="px-4 py-2 text-left w-1/12">Change Type</th>
@@ -109,7 +115,7 @@
                     {{ request.rollback_plan|truncatewords:3 }}
                 </td>
                 <td class="px-4 py-1">
-                    <span class="px-2 py-0.5 rounded text-xs font-medium 
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium 
                                 {% if request.status == 'approved' %}bg-green-100 text-green-800
                                 {% elif request.status == 'rejected' %}bg-red-100 text-red-800
                                 {% else %}bg-yellow-100 text-yellow-800{% endif %}">
