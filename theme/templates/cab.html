@@ -4,26 +4,40 @@
 {% block title %}CAB Dashboard{% endblock %}
 
 {% block sidebar %}
+<div class="flex flex-col w-64 h-full p-4 font-sans bg-gray-50">
+    <!-- Panel Header -->
+    <div class="mb-6 p-4 rounded-lg shadow-md bg-white">
+        <h1 class="text-xl font-bold text-gray-800">CAB</h1>
+    </div>
 
-<div class="flex flex-col h-full justify-between bg-gray-100 w-64 p-4">
-    <nav class="flex-grow">
-        <ul class="space-y-2">
+    <!-- Navigation Links -->
+    <nav class="flex-1 space-y-1">
+        <ul class="dashboard-menu">
             <li>
-                <a href="{% url 'cab' %}" class="flex items-center gap-2 text-gray-700 hover:text-blue-600">
-                    {% heroicon_outline "folder-plus" %}CAB Dashboard 
+                <a href="{% url 'cab' %}"
+                   class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-gray-700
+                          {% if request.resolver_match.url_name == 'cab' %} bg-gray-200 font-semibold {% endif %}
+                          hover:bg-gray-100">
+                    {% heroicon_outline "home" class="w-5 h-5" %}CAB Dashboard
                 </a>
             </li>
             <li>
-                <a href="{% url 'cab_stats' %}" class="flex items-center gap-2 text-gray-700 hover:text-blue-600">
-                    {% heroicon_outline "chart-bar" %}CAB Stats 
+                <a href="{% url 'cab_stats' %}"
+                   class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-gray-700
+                          {% if request.resolver_match.url_name == 'cab_stats' %} bg-gray-200 font-semibold {% endif %}
+                          hover:bg-gray-100">
+                    {% heroicon_outline "chart-pie" class="w-5 h-5" %}Statistics
                 </a>
             </li>
         </ul>
     </nav>
-    <div class="mt-4">
-        <a href="{% url 'logout' %}" class="flex items-center gap-2 bg-gray-700 text-white hover:bg-red-500 px-4 py-2 rounded-lg">
-            {% heroicon_outline "arrow-left-on-rectangle" class="w-5 h-5" %}
-            Logout 
+
+    <!-- Logout anchored at bottom -->
+    <div class="mt-auto">
+        <a href="{% url 'logout' %}"
+           class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700 text-white
+                  hover:bg-red-500 hover:text-white">
+            {% heroicon_outline "arrow-left-on-rectangle" class="w-5 h-5" %}Logout
         </a>
     </div>
 </div>
@@ -31,64 +45,55 @@
 
 {% block content %}
 <div class="flex flex-col items-center px-4 py-6 space-y-6">
-
-    <!-- Filter Form -->
-    <form method="get" class="flex flex-wrap justify-center gap-6 bg-white p-6 rounded-lg shadow-md w-full max-w-6xl">
-        <label class="flex flex-col items-center gap-2 text-gray-700">
-            Status
-            <select name="status" class="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
-                <option value="">All</option>
-                <option value="in_progress" {% if status_filter == "in_progress" %}selected{% endif %}>In Progress</option>
-                <option value="approved" {% if status_filter == "approved" %}selected{% endif %}>Approved</option>
-                <option value="rejected" {% if status_filter == "rejected" %}selected{% endif %}>Rejected</option>
-            </select>
-        </label>
-        <label class="flex flex-col items-center gap-2 text-gray-700">
-            Change Type
-            <select name="change_type" class="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
-                <option value="">All</option>
-                <option value="Normal Change" {% if type_filter == "Normal Change" %}selected{% endif %}>Normal</option>
-                <option value="Standard Change" {% if type_filter == "Standard Change" %}selected{% endif %}>Standard</option>
-                <option value="Emergency Change" {% if type_filter == "Emergency Change" %}selected{% endif %}>Emergency</option>
-            </select>
-        </label>
-        <button type="submit" class="bg-gray-700 text-white px-6 py-1 h-12 rounded-lg hover:bg-gray-500 transition">
-            Filter
-        </button>
-    </form>
+    <!-- Page Header -->
+    <div class="max-w-6xl mx-auto mt-8 text-center">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-2">CAB Requests</h2>
+        <p class="text-gray-500 mb-6">Overview of all CAB requests</p>
+    </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto w-full max-w-6xl">
-        <table class="min-w-full border border-gray-200 rounded-md overflow-hidden">
-            <thead class="bg-gray-700">
+    <div class="overflow-x-auto w-full max-w-6xl border border-gray-200 rounded-lg shadow">
+        <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+            <thead class="bg-gray-700 text-white">
                 <tr>
-                    <th class="text-center px-4 py-2 font-semibold text-white">Title</th>
-                    <th class="text-center px-4 py-2 font-semibold text-white">Type</th>
-                    <th class="text-center px-4 py-2 font-semibold text-white">Status</th>
-                    <th class="text-center px-4 py-2 font-semibold text-white">Requested By</th>
-                    <th class="text-center px-4 py-2 font-semibold text-white">Actions</th>
+                    <th class="text-center px-4 py-2 font-semibold">Title</th>
+                    <th class="text-center px-4 py-2 font-semibold">Type</th>
+                    <th class="text-center px-4 py-2 font-semibold">Status</th>
+                    <th class="text-center px-4 py-2 font-semibold">Requested By</th>
+                    <th class="text-center px-4 py-2 font-semibold">Actions</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                {% for req in requests %}
-                <tr class="hover:bg-gray-50">
-                    <td class="text-center px-4 py-2">{{ req.title }}</td>
-                    <td class="text-center px-4 py-2">{{ req.change_type }}</td>
-                    <td class="text-center px-4 py-2">
-                        <span class="{% if req.status == 'approved' %}text-green-600 font-semibold{% elif req.status == 'rejected' %}text-red-600 font-semibold{% elif req.status == 'in_progress' %}text-yellow-500 font-semibold{% endif %}">
-                            {{ req.status|title }}
-                        </span>
-                    </td>
-                    <td class="text-center px-4 py-2">{{ req.requester.full_name }}</td>
-                    <td class="text-center px-4 py-2">
-                        <a href="{% url 'cab_request_detail' req.id %}" class="text-blue-600 hover:text-blue-800 underline">View</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center px-4 py-4 text-gray-500">No CAB Requests Found.</td>
-                </tr>
-                {% endfor %}
+<tbody class="bg-white divide-y divide-gray-200 ">
+    {% for req in requests %}
+    <tr class="hover:bg-gray-50 transition-colors">
+        <!-- Title with truncate for long names -->
+        <td class="text-center px-4 py-2 max-w-xs truncate">{{ req.title }}</td>
+        <td class="text-center px-4 py-2">{{ req.change_type }}</td>
+        <td class="text-center px-4 py-2">
+            <span class="px-2 py-1 rounded-full text-xs font-medium 
+                    {% if req.status == 'Approved' %}bg-green-100 text-green-800
+                    {% elif req.status == 'Rejected' %}bg-red-100 text-red-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ req.get_status_display }}
+            </span>
+        </td>
+        <td class="text-center px-4 py-2">{{ req.requester.full_name }}</td>
+        <td class="text-center px-4 py-2">
+            <a href="{% url 'cab_request_detail' req.id %}"
+               class="px-2 text-sm rounded-full bg-sky-200 text-sky-600">View</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5" class="text-center px-4 py-6 text-gray-500">
+            🚫 No CAB Requests Found.
+            <a href="{% url 'cab_request_create' %}"
+               class="text-blue-600 hover:text-blue-800 underline">Create one?</a>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+
             </tbody>
         </table>
     </div>

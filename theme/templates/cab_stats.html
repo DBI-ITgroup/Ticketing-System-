@@ -4,41 +4,58 @@
 {% block title %}CAB Rejection Analysis{% endblock %}
 
 {% block sidebar %}
-<div class="flex flex-col h-full justify-between bg-gray-100 w-64 p-4">
-    <nav class="flex-grow">
-        <ul class="space-y-2">
+
+<div class="flex flex-col w-64 h-full p-4  font-sans bg-gray-50">
+    <!-- Panel Header -->
+    <div class="mb-6 p-4 rounded-lg shadow-md bg-white">
+        <h1 class="text-xl font-bold text-gray-800">
+            CAB
+        </h1>
+    </div>
+
+    <!-- Navigation Links -->
+    <nav class="flex-1 space-y-1">
+        <ul class="dashboard-menu">
             <li>
-                <a href="{% url 'cab' %}" class="flex items-center gap-2 text-gray-700 hover:text-blue-600">
-                    {% heroicon_outline "folder-plus" %}CAB Dashboard 
+                <a href="{% url 'cab' %}" 
+                   class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-gray-700 {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-gray-100 font-semibold{% endif %} hover:bg-gray-100">
+                    {% heroicon_outline "home" class="w-5 h-5" %}CAB Dashboard
                 </a>
             </li>
             <li>
-                <a href="{% url 'cab_stats' %}" class="flex items-center gap-2 text-gray-700 hover:text-blue-600">
-                    {% heroicon_outline "chart-bar" %}CAB Stats 
+                <a href="{% url 'cab_stats' %}" 
+                   class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-gray-700 hover:bg-gray-100">
+                    {% heroicon_outline "chart-pie" class="w-5 h-5" %}Statistics
                 </a>
             </li>
         </ul>
     </nav>
-    <div class="mt-4">
-        <a href="{% url 'logout' %}" class="flex items-center gap-2 bg-gray-700 text-white hover:bg-red-500 px-4 py-2 rounded-lg">
-            {% heroicon_outline "arrow-left-on-rectangle" class="w-5 h-5" %}
-            Logout 
+
+    <!-- Logout anchored at bottom -->
+    <div class="mt-auto">
+        <a href="{% url 'logout' %}" 
+           class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-700 text-white hover:bg-red-500 hover:text-white">
+            {% heroicon_outline "arrow-left-on-rectangle" class="w-5 h-5" %}Logout
         </a>
     </div>
 </div>
+
 {% endblock %}
 
 {% block content %}
-<div class="flex flex-col items-center px-4 py-6 space-y-6 max-w-5xl mx-auto">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-4">CAB Rejection Analysis</h2>
-
-    <div id="rejectionChart" class="w-full h-[500px] bg-white rounded-lg shadow-md p-4"></div>
+<div class="max-w-6xl mx-auto mt-8">
+  <h2 class="text-2xl font-semibold text-center text-gray-800 mb-2">CAB Requests</h2>
+  <p class="text-gray-500 text-center mb-6">Overview of all CAB requests</p>
 </div>
 
-<!-- Highcharts JS -->
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/exporting.js"></script>
-<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<div class="overflow-x-auto p-4 px-4 py-6 shadow-xl border border-gray-200 rounded-lg max-w-4xl mx-auto bg-white">
+  <canvas id="rejectionChart"></canvas>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js Data Labels Plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -60,49 +77,62 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const total = data.reduce((a, b) => a + b, 0);
 
-    Highcharts.chart('rejectionChart', {
-        chart: {
-            type: 'bar',
-            backgroundColor: 'transparent',
+    const ctx = document.getElementById('rejectionChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Rejections',
+                data: data,
+                backgroundColor: '#D1D5DB', // Tailwind gray-300
+                borderColor: '#6B7280',     // Tailwind gray-500
+                borderWidth: 1,
+                borderRadius: 6,
+            }]
         },
-        title: { text: null },
-        xAxis: {
-            categories: labels,
-            title: { text: null },
-            labels: { style: { color: '#111827', fontWeight: '500' } }
-        },
-        yAxis: {
-            min: 0,
-            title: {
-                text: 'Number of Rejections',
-                style: { color: '#111827', fontWeight: '600' }
-            },
-            labels: { style: { color: '#6B7280', fontWeight: '500' } },
-            gridLineColor: '#E5E7EB'
-        },
-        tooltip: {
-            formatter: function() {
-                const pct = ((this.y / total) * 100).toFixed(1);
-                return `<b>${this.x}</b>: ${this.y} (${pct}%)`;
-            }
-        },
-        plotOptions: {
-            series: {
-                dataLabels: {
-                    enabled: true,
-                    formatter: function() {
-                        const pct = ((this.y / total) * 100).toFixed(1);
-                        return `${this.y} (${pct}%)`;
-                    },
-                    style: { fontWeight: '500', color: '#111827' }
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw;
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return `${value} (${pct}%)`;
+                        }
+                    }
                 },
-                color: '#3B82F6', // Tailwind blue-500
-                borderRadius: 4,
+                legend: { display: false },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'end',
+                    formatter: (value) => {
+                        const pct = ((value / total) * 100).toFixed(1);
+                        return `${value} (${pct}%)`;
+                    },
+                    color: '#111827',
+                    font: { weight: '500' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#111827', font: { weight: '500' } },
+                    grid: { color: '#E5E7EB' }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Number of Rejections',
+                        color: '#111827',
+                        font: { weight: '600' }
+                    },
+                    ticks: { color: '#6B7280', font: { weight: '500' } },
+                    grid: { color: '#E5E7EB' }
+                }
             }
         },
-        legend: { enabled: false },
-        credits: { enabled: false },
-        series: [{ name: 'Rejections', data: data }]
+        plugins: [ChartDataLabels]
     });
 });
 </script>
