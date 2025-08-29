@@ -74,7 +74,7 @@
 {% block content %}
 <div class="max-w-6xl mx-auto mt-8">
     <h2 class="text-2xl font-semibold text-center text-gray-800 mb-2">Ticket Priority Distribution</h2>
-    <p class="text-gray-500 text-center mb-6">Overview of tickets</p>
+    <p class="text-gray-500 text-center mb-6">Assign tickects to users</p>
 
     <!-- Filter Section -->
     <div class="bg-white p-6 rounded-lg shadow mb-8">
@@ -153,7 +153,13 @@
         {{ ticket.get_priority_level_display|default:"-" }}
     </span>
 </td>
-                    <td class="px-6 py-4">{{ ticket.assigned_technician.get_full_name|default:ticket.assigned_technician.username }}</td>
+                    <td class="px-6 py-4">
+    {% if ticket.assigned_technician %}
+        {{ ticket.assigned_technician.get_full_name|default:ticket.assigned_technician.username }}
+    {% else %}
+        Unassigned
+    {% endif %}
+</td>
                     <td class="px-6 py-4 space-y-1">
                         <form method="POST" class="assign-form flex items-center gap-2" data-ticket-id="{{ ticket.id }}">
                             {% csrf_token %}
@@ -171,10 +177,10 @@
                         </form>
 
                         {% if ticket.status != 'Closed' %}
-                      <button data-ticket-id="{{ ticket.id }}"
+                      <!-- <button data-ticket-id="{{ ticket.id }}"
                               class="close-ticket-btn bg-red-600 text-white text-xs px-3 py-1 rounded hover:bg-red-700 transition mt-1">
                               Close Ticket
-                    </button>
+                    </button> -->
                         {% endif %}
                     </td>
                 </tr>
@@ -208,100 +214,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function confirmClose(ticketId) {
         currentTicketId = ticketId;
-        document.getElementById('confirmCloseModal').classList.remove('hidden');
-        document.getElementById('confirmCloseModal').classList.add('flex');
+        const modal = document.getElementById('confirmCloseModal');
+        modal.classList.remove('hidden'); modal.classList.add('flex');
     }
 
     function hideModal() {
-        document.getElementById('confirmCloseModal').classList.remove('flex');
-        document.getElementById('confirmCloseModal').classList.add('hidden');
+        const modal = document.getElementById('confirmCloseModal');
+        modal.classList.add('hidden'); modal.classList.remove('flex');
         currentTicketId = null;
     }
 
     function closeTicket() {
         const btn = document.getElementById('confirmCloseBtn');
         const btnText = btn.querySelector('.btn-text');
-        btn.disabled = true;
-        btnText.textContent = 'Processing...';
+        btn.disabled = true; btnText.textContent = 'Processing...';
 
         fetch("{% url 'manage_tickets' %}", {
             method: 'POST',
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
             },
-            body: new URLSearchParams({
-                action: 'close',
-                ticket_id: currentTicketId
-            })
+            body: new URLSearchParams({ action: 'close', ticket_id: currentTicketId })
         })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             showAlert(data.message || 'Ticket closed.', data.success ? 'success' : 'error');
             if (data.success) {
                 document.getElementById(`ticket-row-${currentTicketId}`).remove();
             }
         })
-        .catch(() => {
-            showAlert('An unexpected error occurred.', 'error');
-        })
+        .catch(() => showAlert('An error occurred.', 'error'))
         .finally(() => {
             hideModal();
-            btn.disabled = false;
-            btnText.textContent = 'Close Ticket';
+            btn.disabled = false; btnText.textContent = 'Close Ticket';
         });
     }
 
-    // Assign forms
+    // Assign Technician via AJAX
     document.querySelectorAll('.assign-form').forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-
-            const formData = new FormData(this);
-            const btn = this.querySelector('button');
+            const ticketId = this.dataset.ticketId;
+            const technicianId = this.querySelector('select[name="technician_id"]').value;
+            const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+            const btn = this.querySelector('button'); 
             const btnText = btn.querySelector('.btn-text');
 
-            btn.disabled = true;
-            btnText.textContent = 'Assigning...';
+            btn.disabled = true; btnText.textContent = 'Assigning...';
 
             fetch("{% url 'manage_tickets' %}", {
                 method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                body: new URLSearchParams(formData)
+                headers: { 
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams({ 
+                    action: 'assign', 
+                    ticket_id: ticketId, 
+                    technician_id: technicianId 
+                })
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 showAlert(data.message || 'Technician assigned.', data.success ? 'success' : 'error');
+                if (data.success) {
+                    const row = document.getElementById(`ticket-row-${ticketId}`);
+                    if (row) {
+                        const techCell = row.querySelector('.assigned-technician');
+                        techCell.textContent = this.querySelector(`select[name="technician_id"] option:checked`).textContent;
+                    }
+                }
             })
-            .catch(() => {
-                showAlert('An error occurred while assigning.', 'error');
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btnText.textContent = 'Assign';
-            });
+            .catch(() => showAlert('An error occurred.', 'error'))
+            .finally(() => { btn.disabled = false; btnText.textContent = 'Assign'; });
         });
     });
 
     function showAlert(message, type) {
         const alert = document.getElementById('alertMessage');
         const text = document.getElementById('alertText');
-
         alert.classList.remove('hidden', 'bg-green-100', 'bg-red-100', 'text-green-700', 'text-red-700');
         text.textContent = message;
-
-        if (type === 'success') {
-            alert.classList.add('bg-green-100', 'text-green-700');
-        } else {
-            alert.classList.add('bg-red-100', 'text-red-700');
-        }
-
-        setTimeout(() => {
-            alert.classList.add('hidden');
-        }, 5000);
+        alert.classList.add(type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+        setTimeout(() => alert.classList.add('hidden'), 5000);
     }
 
-   
     window.confirmClose = confirmClose;
     window.closeTicket = closeTicket;
     window.hideModal = hideModal;
