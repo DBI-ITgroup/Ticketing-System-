@@ -130,32 +130,32 @@ def user_login(request):
     if request.method == "POST":
         form = CustomLoginForm(request.POST)
         if form.is_valid():
+            # Form has already validated credentials in clean()
             email = form.cleaned_data["email"]
             password = form.cleaned_data["password"]
-            
-            user = authenticate(request, username=email, password=password)
-            
-            if user is not None:
-                login(request, user)
-                
-                # Redirect based on the role
-                if user.role == "End-User":
-                    return redirect("dashboard")  # End-users go to their dashboard
-                elif user.role == "L1_Technician" :
-                    return redirect("technician_dashboard")  # Redirect L1 Technicians to their dashboard
-                elif user.role == "CAB" :
-                    return redirect("cab")
-                elif user.role == user.role == "L2_Technician":
-                    return redirect("l2_technician_dashboard")  # Redirect L2 Technicians to their dashboard
-                else:
-                    return redirect("admin_dashboard")  # Admin users go to the admin dashboard
 
-            else: 
-                messages.error(request, "Invalid email or password!")
-    
-    else:  
-        form = CustomLoginForm()
+            user = authenticate(request, username=email, password=password)
+            if user:
+                if not user.is_active:
+                    messages.error(request, "Your account is disabled. Contact the administrator.")
+                    return render(request, "login.html", {"form": form})
+
+                login(request, user)
+
+                # Role-based redirects
+                role_redirects = {
+                    "End-User": "dashboard",
+                    "L1_Technician": "technician_dashboard",
+                    "CAB": "cab",
+                    "L2_Technician": "l2_technician_dashboard",
+                }
+                return redirect(role_redirects.get(user.role, "admin_dashboard"))
             
+            # This should rarely happen since form already validated
+            messages.error(request, "Invalid email or password.")
+    else:
+        form = CustomLoginForm()
+
     return render(request, "login.html", {"form": form})
 
 
