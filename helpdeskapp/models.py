@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from cloudinary.models import CloudinaryField
 
 
 
