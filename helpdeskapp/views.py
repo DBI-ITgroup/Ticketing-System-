@@ -126,36 +126,37 @@ def user_management(request):
     return render(request, "user_role_list.html", {"users": users})
     
 
+#Users Login 
 def user_login(request):
     if request.method == "POST":
         form = CustomLoginForm(request.POST)
         if form.is_valid():
+            # Form has already validated credentials in clean()
             email = form.cleaned_data["email"]
             password = form.cleaned_data["password"]
-            
-            user = authenticate(request, username=email, password=password)
-            
-            if user is not None:
-                login(request, user)
-                
-                # Redirect based on the role
-                if user.role == "End-User":
-                    return redirect("dashboard")  # End-users go to their dashboard
-                elif user.role == "L1_Technician" :
-                    return redirect("technician_dashboard")  # Redirect L1 Technicians to their dashboard
-                elif user.role == "CAB" :
-                    return redirect("cab")
-                elif user.role == user.role == "L2_Technician":
-                    return redirect("l2_technician_dashboard")  # Redirect L2 Technicians to their dashboard
-                else:
-                    return redirect("admin_dashboard")  # Admin users go to the admin dashboard
 
-            else: 
-                messages.error(request, "Invalid email or password!")
-    
-    else:  
-        form = CustomLoginForm()
+            user = authenticate(request, username=email, password=password)
+            if user:
+                if not user.is_active:
+                    messages.error(request, "Your account is disabled. Contact the administrator.")
+                    return render(request, "login.html", {"form": form})
+
+                login(request, user)
+
+                # Role-based redirects
+                role_redirects = {
+                    "End-User": "dashboard",
+                    "L1_Technician": "technician_dashboard",
+                    "CAB": "cab",
+                    "L2_Technician": "l2_technician_dashboard",
+                }
+                return redirect(role_redirects.get(user.role, "admin_dashboard"))
             
+            # This should rarely happen since form already validated
+            messages.error(request, "Invalid email or password.")
+    else:
+        form = CustomLoginForm()
+
     return render(request, "login.html", {"form": form})
 
 
@@ -218,10 +219,10 @@ def add_ticket_view(request):
 @login_required
 def add_ticket(request):
     if request.method == "POST":
-        print("Starting add_ticket POST")
+       # print("Starting add_ticket POST")
         form = TicketForm(request.POST, request.FILES)
         if form.is_valid():
-            print("Form is valid")
+           # print("Form is valid")
             ticket = form.save(commit=False)
             ticket.user = request.user
             ticket.ticket_number = str(uuid.uuid4()).replace('-', '')[:8].upper()
@@ -230,23 +231,23 @@ def add_ticket(request):
             if technician:
                 ticket.assigned_technician = technician
                 ticket.status = 'Pending'
-                print(f" Assigned to: {technician.email}")
-                print("Sending ticket assignment email...")
+               # print(f" Assigned to: {technician.email}")
+                #print("Sending ticket assignment email...")
                 send_ticket_assignment_email(technician, ticket)
                 ticket.assigned_at = timezone.now()
             else:
                 ticket.status = 'Unassigned'
-                print(" No technician available")
+               # print(" No technician available")
 
             ticket.save()
             # messages.success(request, "Ticket successfully created!")
             return redirect('dashboard')
         else:
-            print(" Form is invalid")
-            print(form.errors)
+           # print(" Form is invalid")
+           # print(form.errors)
             # messages.error(request, "Form submission failed. Please correct the errors.")
     else:
-        print(" GET request to add_ticket")
+       # print(" GET request to add_ticket")
 
     form = TicketForm()
     return render(request, "add_tickets.html", {"form": form})
@@ -266,17 +267,17 @@ def settings_page(request):
         if form.is_valid():
             form.save()
             update_session_auth_hash(request, user)
-            messages.success(request, "Password updated successfully!")
+           # messages.success(request, "Password updated successfully!")
             return redirect('settings-page')
         else:
-            messages.error(request, "Error updating password. Please check your inputs.")
+           # messages.error(request, "Error updating password. Please check your inputs.")
     else:
         form = SetPasswordForm(user=user)
 
     return render(request, "settings.html", {"form": form})
 def user_logout(request):
     logout(request)  # Properly log out the user
-    messages.success(request, "You have been logged out.")
+    #messages.success(request, "You have been logged out.")
     return redirect('login')
 
 @login_required
@@ -703,7 +704,7 @@ def reports_view(request):
             priority_data[priority] = entry['count']
 
     # Optional: Debug
-    print("DEBUG priority_data:", priority_data)
+    #print("DEBUG priority_data:", priority_data)
 
     return render(request, 'reports.html', {
         'priority_data_json': json.dumps(priority_data)
@@ -960,7 +961,7 @@ def cab_requests_table_view(request):
 
 #Function for sending an email to the technician
 def send_ticket_assignment_email(technician, ticket):
-    print("Inside send_ticket_assignment_email")
+    #print("Inside send_ticket_assignment_email")
 
     subject = f"New Ticket Assigned: {ticket.ticket_title}"
     message = f"""
@@ -985,9 +986,9 @@ Please log in to the Helpdesk system to view and manage the ticket.
             recipient_list=[technician.email],
             fail_silently=False,
         )
-        print(f"Email sent to {technician.email}")
+       # print(f"Email sent to {technician.email}")
     except Exception as e:
-        print(f"Failed to send email to {technician.email}: {e}")
+       # print(f"Failed to send email to {technician.email}: {e}")
 
 #Reset password 
 def custom_password_reset(request):
