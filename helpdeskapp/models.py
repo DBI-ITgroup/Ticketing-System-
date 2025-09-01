@@ -176,7 +176,7 @@ class CABRequest(models.Model):
 
     def __str__(self):
         return f"{self.change_type} - {self.title} ({self.requester.full_name})"
-    
+#Ticket management 
 class TicketAssignment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='assignments')
     technician = models.ForeignKey(
@@ -186,7 +186,7 @@ class TicketAssignment(models.Model):
     related_name='assigned_ticket_entries'
 )
     assigned_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='tickets_assigned_by')
-    assigned_at = models.DateTimeField(auto_now_add=True)
+    assigned_at = models.DateTimeField(auto_now_add=True) 
     
     class Meta:
         unique_together = ('ticket', 'technician')  
