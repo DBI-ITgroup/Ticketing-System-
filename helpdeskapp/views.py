@@ -230,26 +230,27 @@ def add_ticket(request):
             if technician:
                 ticket.assigned_technician = technician
                 ticket.status = 'Pending'
-               print(f" Assigned to: {technician.email}")
-               print("Sending ticket assignment email...")
+                print(f"Assigned to: {technician.email}")
+                print("Sending ticket assignment email...")
                 send_ticket_assignment_email(technician, ticket)
                 ticket.assigned_at = timezone.now()
             else:
                 ticket.status = 'Unassigned'
-                print(" No technician available")
+                print("No technician available")
 
             ticket.save()
-             messages.success(request, "Ticket successfully created!")
+            messages.success(request, "Ticket successfully created!")
             return redirect('dashboard')
         else:
-            print(" Form is invalid")
+            print("Form is invalid")
             print(form.errors)
             messages.error(request, "Form submission failed. Please correct the errors.")
     else:
-        print(" GET request to add_ticket")
+        print("GET request to add_ticket")
 
     form = TicketForm()
     return render(request, "add_tickets.html", {"form": form})
+
     
 @login_required
 def my_tickets(request):
@@ -266,14 +267,17 @@ def settings_page(request):
         if form.is_valid():
             form.save()
             update_session_auth_hash(request, user)
-           # messages.success(request, "Password updated successfully!")
+            messages.success(request, "Password updated successfully!")
             return redirect('settings-page')
         else:
-           # messages.error(request, "Error updating password. Please check your inputs.")
+            messages.error(request, "Error updating password. Please check your inputs.")
     else:
         form = SetPasswordForm(user=user)
 
     return render(request, "settings.html", {"form": form})
+
+    
+    
 def user_logout(request):
     logout(request)  # Properly log out the user
     #messages.success(request, "You have been logged out.")
