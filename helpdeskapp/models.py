@@ -63,7 +63,9 @@ class Ticket(models.Model):
     problem_description = models.TextField()
     priority_level = models.CharField(max_length=50, choices=PRIORITY_CHOICES)
     preferred_contact_method = models.CharField(max_length=50, choices=CONTACT_METHOD_CHOICES)
-    attachment = models.FileField(upload_to='attachments/', blank=True, null=True)
+    #attachment = models.FileField(upload_to='attachments/', blank=True, null=True)
+    attachment = CloudinaryField('attachment', blank=True, null=True)
+
     date_created_on = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
