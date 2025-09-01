@@ -243,9 +243,9 @@ def add_ticket(request):
             # messages.success(request, "Ticket successfully created!")
             return redirect('dashboard')
         else:
-           # print(" Form is invalid")
-           # print(form.errors)
-            # messages.error(request, "Form submission failed. Please correct the errors.")
+            print(" Form is invalid")
+            print(form.errors)
+             messages.error(request, "Form submission failed. Please correct the errors.")
     else:
        # print(" GET request to add_ticket")
 
