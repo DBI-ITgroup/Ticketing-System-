@@ -61,7 +61,6 @@ def register(request):
         form = CustomUserRegistrationForm()
 
     return render(request, "register.html", {"form": form})
-    
 
 CustomUser = get_user_model()
 
@@ -124,7 +123,7 @@ def user_management(request):
     # GET: show users
     users = CustomUser.objects.all()
     return render(request, "user_role_list.html", {"users": users})
-    
+
 
 def user_login(request):
     if request.method == "POST":
@@ -157,8 +156,6 @@ def user_login(request):
         form = CustomLoginForm()
 
     return render(request, "login.html", {"form": form})
-
-
 
 
 @login_required
@@ -230,27 +227,26 @@ def add_ticket(request):
             if technician:
                 ticket.assigned_technician = technician
                 ticket.status = 'Pending'
-                print(f"Assigned to: {technician.email}")
+                print(f" Assigned to: {technician.email}")
                 print("Sending ticket assignment email...")
                 send_ticket_assignment_email(technician, ticket)
                 ticket.assigned_at = timezone.now()
             else:
                 ticket.status = 'Unassigned'
-                print("No technician available")
+                print(" No technician available")
 
             ticket.save()
-            messages.success(request, "Ticket successfully created!")
+            # messages.success(request, "Ticket successfully created!")
             return redirect('dashboard')
         else:
-            print("Form is invalid")
+            print(" Form is invalid")
             print(form.errors)
-            messages.error(request, "Form submission failed. Please correct the errors.")
+            # messages.error(request, "Form submission failed. Please correct the errors.")
     else:
-        print("GET request to add_ticket")
+        print(" GET request to add_ticket")
 
     form = TicketForm()
     return render(request, "add_tickets.html", {"form": form})
-
     
 @login_required
 def my_tickets(request):
@@ -274,13 +270,10 @@ def settings_page(request):
     else:
         form = SetPasswordForm(user=user)
 
-    return render(request, "settings.html", {"form": form})
-
-    
-    
+    return render(request, "settings.html", {"form": form}) 
 def user_logout(request):
     logout(request)  # Properly log out the user
-    #messages.success(request, "You have been logged out.")
+    messages.success(request, "You have been logged out.")
     return redirect('login')
 
 @login_required
@@ -403,13 +396,15 @@ def notes(request):
 @login_required
 def accept_ticket(request, id):
     ticket = get_object_or_404(Ticket, id=id)
-    
-     # Record the assignment
+
+    # Record the assignment
     TicketAssignment.objects.create(
         ticket=ticket,
         technician=request.user
     )
-    
+
+
+
     ticket.status = "In Progress"
     ticket.assigned_at = timezone.now()       # New: time ticket was accepted
 
@@ -593,16 +588,16 @@ def accept_ticket_l2_escalated(request, id):
     if not ticket.accepted_by_l2:
         ticket.accepted_by_l2 = True
         ticket.start_time = timezone.now()
+        ticket.assigned_to = request.user
         ticket.save()
-        
-        
-        # Record assignment for history
+
+         # Record assignment for history
         TicketAssignment.objects.create(
             ticket=ticket,
             technician=request.user,
             assigned_at=timezone.now()
         )
-        
+
     return redirect('escalated_tickets')  
 
 @require_POST
@@ -612,15 +607,16 @@ def accept_ticket_l2_completed(request, id):
     if not ticket.accepted_by_l2:
         ticket.accepted_by_l2 = True
         ticket.start_time = timezone.now()
+        ticket.assigned_to = request.user
+
         ticket.save()
-        
-        # Record assignment for history
+
+         # Record assignment for history
         TicketAssignment.objects.create(
             ticket=ticket,
             technician=request.user,
             assigned_at=timezone.now()
         )
-        
     return redirect('completed_tickets')
 
 #Chatbot
@@ -641,10 +637,13 @@ def chat_with_bot(request):
             reply = "You're welcome! 😊"
 
         elif "how do I reset my password?" in user_message:
-            reply = "Click on 'Settings', enter a new password and confirm your password"    
+            reply = "Click on 'Settings', enter a new password and confirm your password"   
+        elif "open ticket" in user_message or "create ticket" in user_message:
+            reply = "To open a ticket, go to your dashboard and click 'Add Ticket'."  
+        elif "check status" in user_message or "track ticket" in user_message:
+            reply = "You can check the status of your tickets in 'My Tickets' on your dashboard."       
         else:
             reply = "I'm not sure how to respond to that. Could you please rephrase?"
-
         return JsonResponse({"reply": reply})
     return JsonResponse({"error": "Invalid request method"}, status=400)
 
@@ -707,7 +706,7 @@ def reports_view(request):
             priority_data[priority] = entry['count']
 
     # Optional: Debug
-    #print("DEBUG priority_data:", priority_data)
+    print("DEBUG priority_data:", priority_data)
 
     return render(request, 'reports.html', {
         'priority_data_json': json.dumps(priority_data)
@@ -964,7 +963,7 @@ def cab_requests_table_view(request):
 
 #Function for sending an email to the technician
 def send_ticket_assignment_email(technician, ticket):
-    #print("Inside send_ticket_assignment_email")
+    print("Inside send_ticket_assignment_email")
 
     subject = f"New Ticket Assigned: {ticket.ticket_title}"
     message = f"""
@@ -989,9 +988,9 @@ Please log in to the Helpdesk system to view and manage the ticket.
             recipient_list=[technician.email],
             fail_silently=False,
         )
-       # print(f"Email sent to {technician.email}")
+        print(f"Email sent to {technician.email}")
     except Exception as e:
-       # print(f"Failed to send email to {technician.email}: {e}")
+        print(f"Failed to send email to {technician.email}: {e}")
 
 #Reset password 
 def custom_password_reset(request):
@@ -1058,3 +1057,4 @@ def l2_technician_history(request):
     ).select_related("ticket").order_by("-assigned_at")
 
     return render(request, "l2_technician_history.html", {"assignments": assignments})
+
