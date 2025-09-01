@@ -771,34 +771,67 @@ def manage_tickets(request):
         ticket_id = request.POST.get('ticket_id')
         ticket = get_object_or_404(Ticket, id=ticket_id)
 
+        # ---------- Assign Technician ----------
         if action == 'assign':
             technician_id = request.POST.get('technician_id')
+            if not technician_id:
+                message = "Please select a technician."
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'message': message})
+                return redirect('manage_tickets')
+
             technician = get_object_or_404(
                 User, id=technician_id, role__in=['L1_Technician', 'L2_Technician']
             )
 
-            TicketAssignment.objects.create(
-                ticket=ticket,
-                technician=technician,
-                assigned_by=request.user
-            )
+            # Detect reassignment
+            previous_technician = ticket.assigned_technician
 
-            return JsonResponse({
-                'success': True,
-                'message': f"Ticket {ticket.id} assigned to {technician.username} successfully!"
-            })
+            # Assign technician to ticket
+            ticket.assigned_technician = technician
+            ticket.assigned_at = timezone.now()
+            ticket.save()
 
+            # Send confirmation email if reassignment happened
+            if previous_technician and previous_technician != technician:
+                subject = f"Ticket Reassigned: {ticket.ticket_number}"
+                message = (
+                    f"Hello {technician.get_full_name() or technician.username},\n\n"
+                    f"Ticket {ticket.ticket_number} has been reassigned to you.\n\n"
+                    f"Title: {ticket.ticket_title}\n"
+                    f"Description: {ticket.problem_description}\n"
+                    f"Priority: {ticket.priority_level}\n\n"
+                    f"Please take ownership of this ticket."
+                )
+                recipient_list = [technician.email]
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list)
+
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': f"Ticket {ticket.ticket_number} assigned to {technician.get_full_name() or technician.username} successfully!"
+                })
+            return redirect('manage_tickets')
+
+        # ---------- Close Ticket ----------
         elif action == 'close':
             ticket.status = 'Closed'
+            ticket.closed_at = timezone.now()
             ticket.save()
-            return JsonResponse({
-                'success': True,
-                'message': f"Ticket {ticket.id} closed successfully!"
-            })
 
-        return JsonResponse({'success': False, 'message': 'Invalid action'})
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': f"Ticket {ticket.ticket_number} closed successfully!"
+                })
+            return redirect('manage_tickets')
 
-    # For GET requests, render normal page
+        # ---------- Invalid Action ----------
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': 'Invalid action'})
+        return HttpResponse("Invalid action", status=400)
+
+    # ---------- GET Request ----------
     tickets = Ticket.objects.exclude(status='Closed')
     technicians = User.objects.filter(role__in=['L1_Technician', 'L2_Technician'])
     departments = Ticket.DEPARTMENT_CHOICES
@@ -810,7 +843,6 @@ def manage_tickets(request):
         'departments': departments,
         'priorities': priorities,
     })
-
     
 def is_CAB(user):
     return user.is_authenticated and user.role == "CAB"  
