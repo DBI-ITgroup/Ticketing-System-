@@ -158,6 +158,29 @@ def user_login(request):
     return render(request, "login.html", {"form": form})
 
 
+#Edit user details 
+def edit_user(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+
+    if request.method == "POST":
+        user.full_name = request.POST.get("full_name")
+        user.email = request.POST.get("email")
+        user.role = request.POST.get("role")
+        user.save()
+        messages.success(request, "User details updated successfully.")
+        return redirect("user_role_list")
+
+    messages.error(request, "Invalid request.")
+    return redirect("user_role_list")
+
+def delete_user(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
+    if request.method == "POST":
+        user.delete()
+        messages.success(request, "User deleted successfully.")
+    return redirect("user_role_list")
+
+
 @login_required
 def dashboard(request):
     tickets = Ticket.objects.filter(user=request.user)

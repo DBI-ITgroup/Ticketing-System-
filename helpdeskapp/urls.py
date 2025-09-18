@@ -20,7 +20,9 @@ urlpatterns = [
 
 
 
-
+     #User management 
+    path("users/<int:user_id>/edit/", views.edit_user, name="edit_user"),
+    path('users/<int:user_id>/delete/', views.delete_user, name='delete_user'),
 
     # Ticket Management
     path('add_ticket/', views.add_ticket, name='add_ticket'),  
